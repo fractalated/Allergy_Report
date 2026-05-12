@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,maximum-scale=1"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Allergy Report"/>
+  <title>Allergy Report</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    :root{
+      --bg:#0f1117;--s:#1a1d27;--s2:#242736;--b:#2e3347;
+      --a:#4a9eff;--a2:#7c5cbf;--t:#e8eaf0;--t2:#9aa0b4;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+
+    html{width:100%;height:100%;}
+    body{
+      width:100%;height:100%;
+      background:var(--bg);color:var(--t);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      display:flex;flex-direction:column;
+      overflow:hidden;
+    }
+
+    /* HEADER */
+    #hdr{
+      height:8vh;
+      background:linear-gradient(135deg,#1a1d27,#242736);
+      border-bottom:1px solid var(--b);
+      display:flex;align-items:center;
+      padding:0 2vw;
+      padding-top:calc(0.5vh + env(safe-area-inset-top));
+      gap:1.5vw;
+      flex-shrink:0;
+    }
+    #hdr-left{flex:0 0 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;line-height:1.2;}
+    h1{font-size:1.7vh;font-weight:700;color:var(--a);letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .sub{font-size:1vh;color:var(--t2);white-space:nowrap;}
+    #hdr-right{flex:1;min-width:0;display:flex;align-items:center;gap:1vw;}
+    #search-row{display:flex;align-items:center;gap:0.8vw;flex:1;min-width:0;}
+    #loc-input{
+      flex:1;min-width:0;
+      background:var(--s2);border:1px solid var(--b);color:var(--t);
+      height:2.6vh;padding:0 1.2vw;
+      border-radius:1.6vh;font-size:1.2vh;outline:none;-webkit-appearance:none;
+    }
+    #loc-input::placeholder{color:var(--t2);}
+    #go-btn{
+      background:var(--a);border:none;color:#fff;
+      height:2.6vh;padding:0 1.2vw;
+      border-radius:1.6vh;font-size:1.2vh;
+      font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;
+    }
+    #rbtn{
+      background:var(--s2);border:1px solid var(--b);color:#4a9eff;
+      height:2.6vh;padding:0 1vw;
+      border-radius:2vh;font-size:1.3vh;
+      cursor:pointer;font-weight:600;white-space:nowrap;flex-shrink:0;
+    }
+
+    #geo-suggestions{position:fixed;left:2vw;right:2vw;top:11vh;
+      z-index:500;background:#1a1d27;border:1px solid var(--b);
+      border-radius:1vh;overflow:hidden;max-height:25vh;overflow-y:auto;display:none;}
+    .geo-item{display:block;width:100%;text-align:left;background:transparent;border:none;
+      border-bottom:1px solid var(--b);color:var(--t);padding:1.2vh 3vw;font-size:1.4vh;cursor:pointer;}
+    .geo-item:last-child{border-bottom:none;}
+    .geo-item:active{background:var(--s2);}
+
+    /* CARDS */
+    #cards-wrap{
+      height:8vh;
+      flex-shrink:0;
+      display:flex;align-items:center;
+      padding:0 2vw;
+      border-bottom:1px solid var(--b);
+    }
+    #cards{display:flex;gap:1vw;overflow-x:auto;width:100%;height:100%;align-items:center;
+      -webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0.5vh 0;}
+    #cards::-webkit-scrollbar{display:none;}
+    .card{
+      flex:0 0 auto;
+      height:78%;
+      min-width:9vw;
+      background:var(--s);border:1px solid var(--b);
+      border-radius:1vh;padding:0.5vh 1vw;text-align:center;
+      position:relative;overflow:hidden;
+      display:flex;flex-direction:column;justify-content:center;
+      touch-action:none;user-select:none;cursor:pointer;
+    }
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:0.4vh;background:var(--cc,var(--a));}
+    .clbl{font-size:1vh;color:var(--t2);text-transform:uppercase;letter-spacing:.3px;}
+    .cval{font-size:1.6vh;font-weight:700;color:var(--t);line-height:1.1;}
+    .cunit{font-size:.9vh;color:var(--t2);}
+    .cst{font-size:1vh;font-weight:600;}
+    .vsep{width:0.15vw;height:60%;background:var(--b);flex-shrink:0;margin:0 0.3vw;}
+
+    /* CHART WRAP */
+    #chart-wrap{
+      flex:1;min-height:0;
+      display:flex;flex-direction:column;
+      overflow:hidden;
+    }
+
+    #toolbar{
+      height:4vh;
+      flex-shrink:0;
+      display:flex;align-items:center;gap:0.5vw;
+      padding:0 1.5vw;
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;scrollbar-width:none;
+      border-bottom:1px solid var(--b);
+    }
+    #toolbar::-webkit-scrollbar{display:none;}
+    .rb{
+      background:transparent;border:1px solid var(--b);color:var(--t2);
+      height:2.2vh;padding:0 0.8vw;
+      border-radius:1.5vh;font-size:1.1vh;cursor:pointer;
+      white-space:nowrap;flex-shrink:0;transition:all .15s;
+    }
+    .rb.active{background:var(--a);border-color:var(--a);color:#fff;font-weight:700;}
+    .rb-sep{width:0.1vw;height:2vh;background:var(--b);flex-shrink:0;margin:0 0.3vw;}
+
+    #custom-row{display:none;flex-shrink:0;height:4vh;padding:0 1.5vw;
+      align-items:center;border-bottom:1px solid var(--b);}
+    #custom-row.open{display:flex;}
+    .crow{display:flex;gap:1vw;align-items:center;flex-wrap:nowrap;}
+    .crow label{font-size:1vh;color:var(--t2);white-space:nowrap;}
+    .crow input[type=date]{background:var(--s2);border:1px solid var(--b);color:var(--t);
+      height:2.2vh;padding:0 0.8vw;border-radius:1.5vh;font-size:1.2vh;color-scheme:dark;}
+    .apply{background:var(--a2);border:none;color:#fff;height:2.2vh;padding:0 1vw;
+      border-radius:1.5vh;font-size:1.2vh;font-weight:600;cursor:pointer;white-space:nowrap;}
+
+    #sbar{display:none;flex-shrink:0;height:3vh;padding:0 2vw;
+      font-size:1vh;color:var(--t2);align-items:center;gap:1vw;
+      background:var(--s);border-bottom:1px solid var(--b);}
+    .spin{width:1.5vh;height:1.5vh;border:0.3vh solid var(--b);border-top-color:var(--a);
+      border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    #errbox{display:none;flex-shrink:0;padding:0 2vw;height:3vh;font-size:1.2vh;color:#ff8080;
+      background:#2a1a1a;border-bottom:1px solid #5a2a2a;align-items:center;}
+
+    #chart-div{flex:1;min-height:0;width:100%;touch-action:none;}
+
+    #bnav{
+      height:7vh;
+      flex-shrink:0;
+      display:flex;
+      border-top:1px solid var(--b);
+      background:var(--s);
+      padding-bottom:env(safe-area-inset-bottom);
+    }
+    .bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;background:transparent;border:none;
+      color:var(--t2);font-size:1.2vh;font-weight:500;cursor:pointer;gap:0.3vh;transition:color .15s;}
+    .bnav-btn .ico{font-size:2vh;line-height:1;}
+    .bnav-btn.active{color:var(--a);}
+
+    #drawer{
+      position:fixed;bottom:0;left:0;right:0;
+      background:var(--s);border-top:1px solid var(--b);
+      border-radius:2vh 2vh 0 0;
+      max-height:65vh;
+      transform:translateY(100%);
+      transition:transform .28s cubic-bezier(.4,0,.2,1);
+      z-index:400;
+      display:flex;flex-direction:column;
+      padding-bottom:env(safe-area-inset-bottom);
+    }
+    #drawer.open{transform:translateY(0);}
+    #drawer-handle{text-align:center;padding:1.5vh;cursor:pointer;flex-shrink:0;}
+    #drawer-handle::after{content:'';display:inline-block;width:8vw;height:0.5vh;
+      max-width:8vw;background:var(--b);border-radius:2px;}
+    #drawer-body{overflow-y:auto;flex:1;padding:0 4vw 3vh;}
+    #drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:399;display:none;}
+
+    .ctitle{font-size:1.4vh;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin:1vh 0;}
+    .lrow{display:flex;gap:1vw;flex-wrap:wrap;margin-bottom:0.8vh;}
+    .lsec{font-size:1.1vh;color:var(--t2);width:100%;padding-top:0.8vh;margin-top:0.5vh;border-top:1px solid var(--b);}
+    .lb{display:flex;align-items:center;gap:0.5vw;background:var(--s2);
+      border:1px solid var(--b);color:var(--t2);padding:0.6vh 1.5vw;border-radius:2vh;
+      font-size:1.1vh;cursor:pointer;font-weight:500;transition:all .15s;}
+    .lb.active{border-color:var(--bc);color:var(--bc);background:color-mix(in srgb,var(--bc) 10%,var(--s2));}
+    .dot{width:1vh;height:1vh;border-radius:50%;background:var(--bc);flex-shrink:0;}
+    .ltbl{width:100%;border-collapse:collapse;font-size:1.2vh;margin-top:0.8vh;}
+    .ltbl th{text-align:left;color:var(--t2);font-weight:600;padding:0.5vh 1vw;border-bottom:1px solid var(--b);font-size:1.1vh;}
+    .ltbl td{padding:0.5vh 1vw;border-bottom:1px solid #1e2133;color:var(--t);vertical-align:top;}
+    .ltbl tr:last-child td{border-bottom:none;}
+    .dlg{display:inline-block;width:1vh;height:1vh;border-radius:50%;margin-right:0.5vw;vertical-align:middle;}
+    .plgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(22vw,1fr));gap:1.5vw;margin-top:1.5vh;}
+    .plnk{display:block;background:var(--s2);border:1px solid var(--b);border-radius:1vh;
+      padding:1.5vh 1vw;text-align:center;text-decoration:none;color:var(--t);font-size:1.2vh;font-weight:500;}
+    .plnk .ico{font-size:2.5vh;display:block;margin-bottom:0.5vh;}
+    .notice{background:#1a2030;border:1px solid #2a3050;border-radius:1vh;
+      padding:1vh 2vw;font-size:1vh;color:var(--t2);margin-top:1.5vh;line-height:1.6;}
+    .notice strong{color:var(--t);} .notice a{color:var(--a);}
+    .g{color:#4caf50!important;}.m{color:#ffeb3b!important;}.u{color:#ff9800!important;}
+    .uh{color:#f44336!important;}.vu{color:#9c27b0!important;}.hz{color:#cc0000!important;}
+  </style>
+</head>
+<body>
+
+  <div id="hdr">
+    <div id="hdr-left">
+      <h1>&#127807; <span id="loc-title">Douglas County Allergy Report</span></h1>
+      <div class="sub"><span id="loc-sub">Parker / Castle Rock, CO</span> &middot; <span id="lupd">Loading&hellip;</span></div>
+    </div>
+    <div id="hdr-right">
+      <div id="search-row">
+        <input id="loc-input" type="text" placeholder="City or ZIP&hellip;" autocomplete="off" autocorrect="off"
+               onkeydown="if(event.key==='Enter')searchLocation()"/>
+        <button id="go-btn" onclick="searchLocation()">&#128269;</button>
+      </div>
+      <button id="rbtn" onclick="refreshAll()">&#8635;</button>
+    </div>
+  </div>
+  <div id="geo-suggestions"></div>
+
+  <div id="cards-wrap">
+    <div id="cards">
+      <div class="card" style="--cc:#4a9eff" data-layer="us_aqi"
+           onmousedown="soloLayer('us_aqi')" onmouseup="restoreLayers()"
+           ontouchstart="soloLayer('us_aqi')" ontouchend="restoreLayers()">
+        <div class="clbl">US AQI</div><div class="cval" id="c-aqi">&#8212;</div>
+        <div class="cunit">Index</div><div class="cst" id="c-aqi-s">&#8212;</div>
+      </div>
+      <div class="card" style="--cc:#ff7043" data-layer="us_aqi_pm2_5"
+           onmousedown="soloLayer('us_aqi_pm2_5')" onmouseup="restoreLayers()"
+           ontouchstart="soloLayer('us_aqi_pm2_5')" ontouchend="restoreLayers()">
+        <div class="clbl">PM 2.5</div><div class="cval" id="c-pm25">&#8212;</div>
+        <div class="cunit">&mu;g/m&sup3;</div><div class="cst" id="c-pm25-s"></div>
+      </div>
+      <div class="card" style="--cc:#ffa726" data-layer="us_aqi_pm10"
+           onmousedown="soloLayer('us_aqi_pm10')" onmouseup="restoreLayers()"
+           ontouchstart="soloLayer('us_aqi_pm10')" ontouchend="restoreLayers()">
+        <div class="clbl">PM 10</div><div class="cval" id="c-pm10">&#8212;</div>
+        <div class="cunit">&mu;g/m&sup3;</div><div class="cst" id="c-pm10-s"></div>
+      </div>
+      <div class="card" style="--cc:#26c6da" data-layer="us_aqi_ozone"
+           onmousedown="soloLayer('us_aqi_ozone')" onmouseup="restoreLayers()"
+           ontouchstart="soloLayer('us_aqi_ozone')" ontouchend="restoreLayers()">
+        <div class="clbl">Ozone</div><div class="cval" id="c-o3">&#8212;</div>
+        <div class="cunit">&mu;g/m&sup3;</div><div class="cst"></div>
+      </div>
+      <div class="card" style="--cc:#ab47bc" data-layer="us_aqi_no2"
+           onmousedown="soloLayer('us_aqi_no2')" onmouseup="restoreLayers()"
+           ontouchstart="soloLayer('us_aqi_no2')" ontouchend="restoreLayers()">
+        <div class="clbl">NO&#8322;</div><div class="cval" id="c-no2">&#8212;</div>
+        <div class="cunit">&mu;g/m&sup3;</div><div class="cst"></div>
+      </div>
+      <div class="vsep"></div>
+      <div class="card" style="--cc:#1b8a3c" data-layer="p_tree"
+           onmousedown="soloLayer('p_tree')" onmouseup="restoreLayers()"
+           ontouchstart="soloLayer('p_tree')" ontouchend="restoreLayers()">
+        <div class="clbl">Trees</div><div class="cval" id="cp-tree">&#8212;</div>
+        <div class="cunit">Typical</div><div class="cst" id="cp-tree-s"></div>
+      </div>
+      <div class="card" style="--cc:#76ff03" data-layer="p_grass"
+           onmousedown="soloLayer('p_grass')" onmouseup="restoreLayers()"
+           ontouchstart="soloLayer('p_grass')" ontouchend="restoreLayers()">
+        <div class="clbl">Grass</div><div class="cval" id="cp-grass">&#8212;</div>
+        <div class="cunit">Typical</div><div class="cst" id="cp-grass-s"></div>
+      </div>
+      <div class="card" style="--cc:#ef9a9a" data-layer="p_weed"
+           onmousedown="soloLayer('p_weed')" onmouseup="restoreLayers()"
+           ontouchstart="soloLayer('p_weed')" ontouchend="restoreLayers()">
+        <div class="clbl">Weeds</div><div class="cval" id="cp-weed">&#8212;</div>
+        <div class="cunit">Typical</div><div class="cst" id="cp-weed-s"></div>
+      </div>
+      <div class="card" style="--cc:#bcaaa4" data-layer="p_mold"
+           onmousedown="soloLayer('p_mold')" onmouseup="restoreLayers()"
+           ontouchstart="soloLayer('p_mold')" ontouchend="restoreLayers()">
+        <div class="clbl">Mold</div><div class="cval" id="cp-mold">&#8212;</div>
+        <div class="cunit">Typical</div><div class="cst" id="cp-mold-s"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="chart-wrap">
+    <div id="toolbar">
+      <button class="rb" data-d="7" onclick="setRange(7,this)">7d</button>
+      <button class="rb" data-d="14" onclick="setRange(14,this)">14d</button>
+      <button class="rb active" data-d="30" onclick="setRange(30,this)">1mo</button>
+      <button class="rb" data-d="90" onclick="setRange(90,this)">3mo</button>
+      <button class="rb" data-d="180" onclick="setRange(180,this)">6mo</button>
+      <button class="rb" data-d="365" onclick="setRange(365,this)">1yr</button>
+      <button class="rb" data-d="730" onclick="setRange(730,this)">2yr</button>
+      <button class="rb" data-d="1095" onclick="setRange(1095,this)">3yr</button>
+      <div class="rb-sep"></div>
+      <button class="rb" onclick="zoomChart(-1)">&#8722;</button>
+      <button class="rb" onclick="zoomChart(1)">+</button>
+      <div class="rb-sep"></div>
+      <button class="rb" data-d="0" onclick="setCustomMode(this)">Custom</button>
+    </div>
+    <div id="custom-row">
+      <div class="crow">
+        <label>From:</label><input type="date" id="ds"/>
+        <label>To:</label><input type="date" id="de"/>
+        <button class="apply" onclick="applyCustom()">Go</button>
+      </div>
+    </div>
+    <div id="errbox"></div>
+    <div id="sbar"><div class="spin" id="spin"></div><span id="stxt">Loading&hellip;</span></div>
+    <div id="chart-div"></div>
+  </div>
+
+  <div id="bnav">
+    <button class="bnav-btn" id="bnav-layers" onclick="openDrawer('layers')">
+      <span class="ico">&#9776;</span><span>Layers</span>
+    </button>
+    <button class="bnav-btn" id="bnav-guide" onclick="openDrawer('guide')">
+      <span class="ico">&#8505;</span><span>Guide</span>
+    </button>
+    <button class="bnav-btn" id="bnav-sources" onclick="openDrawer('sources')">
+      <span class="ico">&#127973;</span><span>Sources</span>
+    </button>
+  </div>
+
+  <div id="drawer-overlay" onclick="closeDrawer()"></div>
+  <div id="drawer">
+    <div id="drawer-handle" onclick="closeDrawer()"></div>
+    <div id="drawer-body">
+      <div id="panel-layers">
+        <div class="ctitle">Data Layers</div>
+        <div class="lrow">
+          <div class="lsec">&#127749; Air Quality (AQI scale)</div>
+          <button class="lb active" data-k="us_aqi"       style="--bc:#4a9eff" onclick="tl(this)"><span class="dot"></span>US AQI</button>
+          <button class="lb active" data-k="us_aqi_pm2_5" style="--bc:#ff7043" onclick="tl(this)"><span class="dot"></span>PM2.5 AQI</button>
+          <button class="lb active" data-k="us_aqi_pm10"  style="--bc:#ffa726" onclick="tl(this)"><span class="dot"></span>PM10 AQI</button>
+          <button class="lb active" data-k="us_aqi_ozone" style="--bc:#26c6da" onclick="tl(this)"><span class="dot"></span>Ozone AQI</button>
+          <button class="lb"        data-k="us_aqi_no2"   style="--bc:#ab47bc" onclick="tl(this)"><span class="dot"></span>NO&#8322; AQI</button>
+          <button class="lb"        data-k="us_aqi_co"    style="--bc:#78909c" onclick="tl(this)"><span class="dot"></span>CO AQI</button>
+          <div class="lsec">Concentrations (&mu;g/m&sup3;)</div>
+          <button class="lb"        data-k="pm2_5"        style="--bc:#ff5252" onclick="tl(this)"><span class="dot"></span>PM2.5</button>
+          <button class="lb"        data-k="pm10"         style="--bc:#ff8a65" onclick="tl(this)"><span class="dot"></span>PM10</button>
+          <button class="lb"        data-k="ozone"        style="--bc:#80deea" onclick="tl(this)"><span class="dot"></span>Ozone</button>
+          <button class="lb"        data-k="no2"          style="--bc:#ce93d8" onclick="tl(this)"><span class="dot"></span>NO&#8322;</button>
+          <div class="lsec">&#127808; Pollen — typical seasonal index (0–100)</div>
+          <button class="lb active" data-k="p_tree"       style="--bc:#1b8a3c" onclick="tl(this)"><span class="dot"></span>Trees</button>
+          <button class="lb active" data-k="p_grass"      style="--bc:#76ff03" onclick="tl(this)"><span class="dot"></span>Grass</button>
+          <button class="lb active" data-k="p_weed"       style="--bc:#ef9a9a" onclick="tl(this)"><span class="dot"></span>Weeds</button>
+          <button class="lb"        data-k="p_mold"       style="--bc:#bcaaa4" onclick="tl(this)"><span class="dot"></span>Mold</button>
+        </div>
+      </div>
+      <div id="panel-guide" style="display:none">
+        <div class="ctitle">What is PM?</div>
+        <table class="ltbl">
+          <tr><th>Pollutant</th><th>Source</th><th>Health</th><th>Limit</th></tr>
+          <tr><td><span class="dlg" style="background:#ff7043"></span>PM 2.5</td><td>&lt;2.5&mu;m — wildfire, exhaust</td><td>Penetrates lungs</td><td>9&mu;g/m&sup3;</td></tr>
+          <tr><td><span class="dlg" style="background:#ffa726"></span>PM 10</td><td>&lt;10&mu;m — dust, pollen</td><td>Respiratory irritant</td><td>150&mu;g/m&sup3;</td></tr>
+          <tr><td><span class="dlg" style="background:#26c6da"></span>Ozone</td><td>Sunlight + exhaust</td><td>Lung irritation</td><td>70 ppb</td></tr>
+          <tr><td><span class="dlg" style="background:#ab47bc"></span>NO&#8322;</td><td>Vehicle exhaust</td><td>Worsens asthma</td><td>100&mu;g/m&sup3;</td></tr>
+        </table>
+        <div class="ctitle" style="margin-top:2vh">AQI Scale</div>
+        <table class="ltbl">
+          <tr><th>AQI</th><th>Category</th></tr>
+          <tr><td class="g">0–50</td><td class="g">Good</td></tr>
+          <tr><td class="m">51–100</td><td class="m">Moderate</td></tr>
+          <tr><td class="u">101–150</td><td class="u">Unhealthy for Sensitive Groups</td></tr>
+          <tr><td class="uh">151–200</td><td class="uh">Unhealthy</td></tr>
+          <tr><td class="vu">201–300</td><td class="vu">Very Unhealthy</td></tr>
+          <tr><td class="hz">301+</td><td class="hz">Hazardous</td></tr>
+        </table>
+      </div>
+      <div id="panel-sources" style="display:none">
+        <div class="ctitle">Live Pollen &amp; AQ Sources</div>
+        <div class="plgrid">
+          <a class="plnk" id="lnk-airnow" href="https://www.airnow.gov/?city=Parker&state=CO&country=USA" target="_blank"><span class="ico">&#127774;</span>EPA AirNow</a>
+          <a class="plnk" id="lnk-pollen" href="https://www.pollen.com/forecast/current/pollen/80134" target="_blank"><span class="ico">&#127807;</span>Pollen.com</a>
+          <a class="plnk" id="lnk-wc"     href="https://weather.com/forecast/health/l/Parker+CO" target="_blank"><span class="ico">&#127775;</span>Weather.com</a>
+          <a class="plnk" id="lnk-wu"     href="https://www.wunderground.com/health/us/co/parker/80134" target="_blank"><span class="ico">&#128256;</span>Wunderground</a>
+          <a class="plnk" id="lnk-iq"     href="https://www.iqair.com/us/colorado/douglas-county" target="_blank"><span class="ico">&#129366;</span>IQAir</a>
+          <a class="plnk"                  href="https://www.aafa.org/nab/" target="_blank"><span class="ico">&#127973;</span>NAB Stations</a>
+          <a class="plnk"                  href="https://cdphe.colorado.gov/air-quality" target="_blank"><span class="ico">&#127968;</span>CDPHE</a>
+          <a class="plnk"                  href="https://www.epa.gov/outdoor-air-quality-data" target="_blank"><span class="ico">&#128200;</span>EPA AirData</a>
+        </div>
+        <div class="notice" id="data-notice">
+          Air quality: EPA AirNow / Open-Meteo (assimilates US EPA data). Historical Aug 2022 + live forecast.<br/>
+          Pollen: Seasonal index based on NAB station records for CO Front Range.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+let LOC={lat:39.45,lon:-104.87,tz:"America/Denver",name:"Douglas County",admin:"CO",country:"US",zip:"80134",city:"Parker",state:"CO",stateCode:"CO",display:"Douglas County, CO"};
+const AQ_FETCH_KEYS=["us_aqi","us_aqi_pm2_5","us_aqi_pm10","us_aqi_ozone","us_aqi_nitrogen_dioxide","us_aqi_carbon_monoxide","pm2_5","pm10","ozone","nitrogen_dioxide"];
+const LAYER_CFG={
+  us_aqi:{label:"US AQI",color:"#4a9eff",yaxis:"y",unit:"AQI",dash:"solid",src:"aq"},
+  us_aqi_pm2_5:{label:"PM2.5 AQI",color:"#ff7043",yaxis:"y",unit:"AQI",dash:"solid",src:"aq"},
+  us_aqi_pm10:{label:"PM10 AQI",color:"#ffa726",yaxis:"y",unit:"AQI",dash:"dash",src:"aq"},
+  us_aqi_ozone:{label:"Ozone AQI",color:"#26c6da",yaxis:"y",unit:"AQI",dash:"dot",src:"aq"},
+  us_aqi_no2:{label:"NO AQI",color:"#ab47bc",yaxis:"y",unit:"AQI",dash:"solid",src:"aq",fetch:"us_aqi_nitrogen_dioxide"},
+  us_aqi_co:{label:"CO AQI",color:"#78909c",yaxis:"y",unit:"AQI",dash:"solid",src:"aq",fetch:"us_aqi_carbon_monoxide"},
+  pm2_5:{label:"PM2.5",color:"#ff5252",yaxis:"y2",unit:"μg/m³",dash:"solid",src:"aq"},
+  pm10:{label:"PM10",color:"#ff8a65",yaxis:"y2",unit:"μg/m³",dash:"dash",src:"aq"},
+  ozone:{label:"Ozone",color:"#80deea",yaxis:"y2",unit:"μg/m³",dash:"dot",src:"aq"},
+  no2:{label:"NO",color:"#ce93d8",yaxis:"y2",unit:"μg/m³",dash:"solid",src:"aq",fetch:"nitrogen_dioxide"},
+  p_tree:{label:"Trees",color:"#1b8a3c",yaxis:"y3",unit:"/100",dash:"solid",src:"pol"},
+  p_grass:{label:"Grass",color:"#76ff03",yaxis:"y3",unit:"/100",dash:"solid",src:"pol"},
+  p_weed:{label:"Weeds",color:"#ef9a9a",yaxis:"y3",unit:"/100",dash:"solid",src:"pol"},
+  p_mold:{label:"Mold",color:"#bcaaa4",yaxis:"y3",unit:"/100",dash:"dot",src:"pol"},
+};
+let aqData=null,activeL=new Set(["us_aqi","us_aqi_pm2_5","us_aqi_pm10","us_aqi_ozone","p_tree","p_grass","p_weed"]);let viewDays=30,viewStart=null,viewEnd=null,_savedLayers=null;
+function toISO(d){return d.toISOString().slice(0,10);}function daysAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d;}function daysAhead(n){const d=new Date();d.setDate(d.getDate()+n);return d;}function fmtT(d){return new Date(d).toLocaleString("en-US",{timeZone:LOC.tz,month:"short",day:"numeric",hour:"numeric",minute:"2-digit"});}
+function aqiClr(v){if(v==null)return{l:"—",c:""};if(v<=50)return{l:"Good",c:"g"};if(v<=100)return{l:"Moderate",c:"m"};if(v<=150)return{l:"USG",c:"u"};if(v<=200)return{l:"Unhealthy",c:"uh"};if(v<=300)return{l:"V.Unhealthy",c:"vu"};return{l:"Hazardous",c:"hz"};}
+function pollenLvl(v){if(v==null)return{l:"—",c:""};if(v<10)return{l:"Low",c:"g"};if(v<35)return{l:"Mod",c:"m"};if(v<65)return{l:"High",c:"u"};return{l:"V.High",c:"uh"};}
+function latest(arr){for(let i=arr.length-1;i>=0;i--)if(arr[i]!=null)return arr[i];return null;}
+function initDates(){document.getElementById("ds").value=toISO(daysAgo(viewDays));document.getElementById("de").value=toISO(daysAhead(5));}
+const POL_BANDS={south:{tree:[20,45,80,70,40,15,8,5,5,8,10,15],grass:[5,10,20,45,75,85,75,45,20,8,5,5],weed:[5,5,8,15,20,25,40,80,90,50,10,5],mold:[15,15,20,25,30,35,40,45,40,30,20,15]},mid:{tree:[5,18,55,90,80,25,10,5,3,5,5,3],grass:[0,0,5,25,72,92,82,30,8,2,0,0],weed:[0,0,2,5,10,15,35,75,90,45,5,0],mold:[10,10,15,20,25,30,35,40,35,25,15,10]},north:{tree:[2,5,20,60,90,70,20,8,3,2,2,2],grass:[0,0,2,10,45,85,90,60,15,3,0,0],weed:[0,0,0,2,5,10,25,65,85,35,3,0],mold:[5,5,10,15,20,25,35,40,30,20,10,5]},};
+const MDAYS=[31,28,31,30,31,30,31,31,30,31,30,31];
+function getPOL(){return LOC.lat<35?POL_BANDS.south:LOC.lat>42?POL_BANDS.north:POL_BANDS.mid;}
+function pollenVal(type,date){const POL=getPOL(),mo=date.getMonth(),dy=date.getDate();const frac=dy/MDAYS[mo],next=(mo+1)%12;return Math.max(0,Math.min(100,POL[type][mo]*(1-frac)+POL[type][next]*frac));}
+function smooth(arr,w=7){const h=Math.floor(w/2);return arr.map((_,i)=>{let s=0,c=0;for(let j=Math.max(0,i-h);j<=Math.min(arr.length-1,i+h);j++){s+=arr[j];c++;}return s/c;});}
+function buildPollenSeries(startISO,endISO){const times=[],tree=[],grass=[],weed=[],mold=[];const s=new Date(startISO+"T12:00:00"),e=new Date(endISO+"T12:00:00");for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1)){times.push(toISO(d)+"T12:00");tree.push(pollenVal("tree",d));grass.push(pollenVal("grass",d));weed.push(pollenVal("weed",d));mold.push(pollenVal("mold",d));}return{times,tree:smooth(tree),grass:smooth(grass),weed:smooth(weed),mold:smooth(mold)};}
+const BASE="https://air-quality-api.open-meteo.com/v1/air-quality";const VARS=AQ_FETCH_KEYS.join(",");
+async function fetchHistorical(startISO){const earliest="2022-08-01",archiveEnd=toISO(daysAgo(2));const s=startISO<earliest?earliest:startISO;if(s>=archiveEnd)return null;const r=await fetch(`${BASE}?latitude=${LOC.lat}&longitude=${LOC.lon}&hourly=${VARS}&start_date=${s}&end_date=${archiveEnd}&timezone=${encodeURIComponent(LOC.tz)}`);if(!r.ok)throw new Error("Archive error "+r.status);return r.json();}
+async function fetchLive(){const r=await fetch(`${BASE}?latitude=${LOC.lat}&longitude=${LOC.lon}&hourly=${VARS}&past_days=7&forecast_days=5&timezone=${encodeURIComponent(LOC.tz)}`);if(!r.ok)throw new Error("Live error "+r.status);return r.json();}
+function parseAQ(json){const d={time:json.hourly.time};for(const k of AQ_FETCH_KEYS)d[k]=json.hourly[k]||new Array(json.hourly.time.length).fill(null);return d;}
+function mergeAQ(hist,live){const map=new Map();if(hist)for(let i=0;i<hist.time.length;i++){const r={};for(const k of AQ_FETCH_KEYS)r[k]=hist[k][i];map.set(hist.time[i],r);}for(let i=0;i<live.time.length;i++){const t=live.time[i],ex=map.get(t);if(ex){for(const k of AQ_FETCH_KEYS)if(ex[k]==null&&live[k][i]!=null)ex[k]=live[k][i];}else{const r={};for(const k of AQ_FETCH_KEYS)r[k]=live[k][i];map.set(t,r);}}const sorted=[...map.entries()].sort((a,b)=>a[0]<b[0]?-1:1);const merged={time:sorted.map(e=>e[0])};for(const k of AQ_FETCH_KEYS)merged[k]=sorted.map(e=>e[1][k]);return merged;}
+async function loadAQ(){clearErr();const startISO=viewStart||toISO(daysAgo(viewDays||30));const endISO=viewEnd||toISO(daysAhead(5));setStatus("Fetching EPA AirNow data…");try{const [histJson,liveJson]=await Promise.all([fetchHistorical(startISO).catch(e=>{console.warn(e);return null;}),fetchLive()]);const live=parseAQ(liveJson),hist=histJson?parseAQ(histJson):null;aqData=mergeAQ(hist,live);updateCards();renderChart(startISO,endISO);document.getElementById("lupd").textContent=fmtT(new Date());setStatus(`${aqData.time.length.toLocaleString()} hourly points loaded.`,false);setTimeout(hideStatus,4000);}catch(e){showErr(e.message);setStatus("Failed.",false);}}
+function updateCards(){const f=(id,v,fmt)=>document.getElementById(id).textContent=v!=null?fmt(v):"—";if(aqData){const aqi=latest(aqData.us_aqi),pm25=latest(aqData.pm2_5),pm10=latest(aqData.pm10),o3=latest(aqData.ozone),no2=latest(aqData.nitrogen_dioxide);const s=aqiClr(aqi);f("c-aqi",aqi,v=>Math.round(v));document.getElementById("c-aqi").className="cval "+s.c;const se=document.getElementById("c-aqi-s");se.textContent=s.l;se.className="cst "+s.c;f("c-pm25",pm25,v=>v.toFixed(1));f("c-pm10",pm10,v=>Math.round(v));f("c-o3",o3,v=>Math.round(v));f("c-no2",no2,v=>no2.toFixed(1));const ps25=aqiClr(latest(aqData.us_aqi_pm2_5)),ps10=aqiClr(latest(aqData.us_aqi_pm10));const p25e=document.getElementById("c-pm25-s");p25e.textContent=ps25.l;p25e.className="cst "+ps25.c;const p10e=document.getElementById("c-pm10-s");p10e.textContent=ps10.l;p10e.className="cst "+ps10.c;}const now=new Date();["tree","grass","weed","mold"].forEach(t=>{const v=pollenVal(t,now),lv=pollenLvl(v);document.getElementById("cp-"+t).textContent=lv.l;const se=document.getElementById("cp-"+t+"-s");se.textContent=Math.round(v)+"/100";se.className="cst "+lv.c;});}
+function renderChart(startISO,endISO){if(!aqData)return;const polStart=startISO<"2022-08-01"?"2022-08-01":startISO;const pol=buildPollenSeries(polStart,toISO(daysAhead(5)));const polMap={p_tree:pol.tree,p_grass:pol.grass,p_weed:pol.weed,p_mold:pol.mold};const todayISO=toISO(new Date());const traces=[];for(const[k,cfg]of Object.entries(LAYER_CFG)){if(!activeL.has(k))continue;if(cfg.src==="aq"){const fk=cfg.fetch||k;let t=aqData.time,v=aqData[fk]||[];if(t.length>4000){const s=Math.ceil(t.length/4000);t=t.filter((_,i)=>i%s===0);v=v.filter((_,i)=>i%s===0);}traces.push({x:t,y:v,name:cfg.label,type:"scatter",mode:"lines",line:{color:cfg.color,width:1.7,dash:cfg.dash},yaxis:cfg.yaxis,hovertemplate:`<b>${cfg.label}</b>: %{y:.1f} ${cfg.unit}<br>%{x}<extra></extra>`,connectgaps:false});}else{traces.push({x:pol.times,y:polMap[k],name:cfg.label,type:"scatter",mode:"lines",line:{color:cfg.color,width:1.9,dash:cfg.dash},yaxis:"y3",hovertemplate:`<b>${cfg.label}</b>: %{y:.0f}/100<br>%{x}<extra></extra>`,connectgaps:true});}}const polActive=["p_tree","p_grass","p_weed","p_mold"].some(k=>activeL.has(k));Plotly.react("chart-div",traces,{paper_bgcolor:"#1a1d27",plot_bgcolor:"#1a1d27",font:{color:"#9aa0b4",size:10,family:"-apple-system,BlinkMacSystemFont,sans-serif"},margin:{l:38,r:polActive?48:18,t:4,b:30},legend:{orientation:"h",x:0,y:-0.08,font:{size:9,color:"#9aa0b4"},bgcolor:"rgba(0,0,0,0)"},xaxis:{showgrid:true,gridcolor:"#2e3347",zeroline:false,color:"#9aa0b4",tickfont:{size:9},range:[startISO+"T00:00",toISO(daysAhead(5))+"T23:59"],autorange:false,rangeslider:{visible:false}},yaxis:{title:"AQI",titlefont:{color:"#4a9eff",size:9},tickfont:{color:"#4a9eff",size:9},showgrid:true,gridcolor:"#252840",zeroline:false},yaxis2:{title:"μg/m³",titlefont:{color:"#ff7043",size:9},tickfont:{color:"#ff7043",size:9},overlaying:"y",side:"right",showgrid:false,zeroline:false},yaxis3:{title:"Pollen",titlefont:{color:"#1b8a3c",size:9},tickfont:{color:"#1b8a3c",size:9},overlaying:"y",side:"right",anchor:"free",position:1,showgrid:false,zeroline:false,range:[0,110],visible:polActive},shapes:[{type:"line",x0:0,x1:1,xref:"paper",y0:50,y1:50,yref:"y",line:{color:"rgba(255,235,59,0.18)",width:1,dash:"dot"}},{type:"line",x0:0,x1:1,xref:"paper",y0:100,y1:100,yref:"y",line:{color:"rgba(255,152,0,0.18)",width:1,dash:"dot"}},{type:"line",x0:0,x1:1,xref:"paper",y0:150,y1:150,yref:"y",line:{color:"rgba(244,67,54,0.18)",width:1,dash:"dot"}},{type:"line",x0:todayISO,x1:todayISO,y0:0,y1:1,yref:"paper",line:{color:"rgba(255,255,255,0.3)",width:1.2,dash:"dash"}},{type:"rect",x0:todayISO,x1:toISO(daysAhead(5)),y0:0,y1:1,yref:"paper",xref:"x",fillcolor:"rgba(74,158,255,0.04)",line:{width:0}}],annotations:[{x:0,xref:"paper",y:50,yref:"y",text:"Moderate",showarrow:false,font:{size:8,color:"rgba(255,235,59,0.4)"},xanchor:"left"},{x:0,xref:"paper",y:100,yref:"y",text:"USG",showarrow:false,font:{size:8,color:"rgba(255,152,0,0.4)"},xanchor:"left"},{x:todayISO,y:0.98,yref:"paper",text:"Today",showarrow:false,font:{size:8,color:"rgba(255,255,255,0.45)"},yanchor:"top",xanchor:"left",xshift:3}],hovermode:"x unified",autosize:true,dragmode:false},{responsive:false,displayModeBar:false,scrollZoom:false,doubleClick:false});const cd=document.getElementById('chart-div');if(cd._fullLayout)cd._fullLayout.dragmode=false;}
+(function(){const el=document.getElementById("chart-div");const ro=new ResizeObserver(()=>{if(!aqData)return;Plotly.Plots.resize('chart-div');});ro.observe(el);window.addEventListener("orientationchange",()=>{setTimeout(()=>{if(aqData)Plotly.Plots.resize('chart-div');},200);});})();
+function setStatus(msg,loading=true){document.getElementById("stxt").textContent=msg;document.getElementById("spin").style.display=loading?"block":"none";document.getElementById("sbar").style.display="flex";}
+function hideStatus(){document.getElementById("sbar").style.display="none";}
+function showErr(msg){const e=document.getElementById("errbox");e.textContent="⚠ "+msg;e.style.display="block";}
+function clearErr(){document.getElementById("errbox").style.display="none";}
+function setRange(days,btn){viewDays=days;viewStart=null;viewEnd=null;document.querySelectorAll(".rb[data-d]").forEach(b=>b.classList.toggle("active",parseInt(b.dataset.d)===days));document.getElementById("custom-row").classList.remove('open');initDates();loadAQ();}
+function setCustomMode(btn){document.querySelectorAll(".rb").forEach(b=>b.classList.remove("active"));btn.classList.add("active");document.getElementById("custom-row").classList.add('open');}
+function applyCustom(){viewStart=document.getElementById("ds").value;viewEnd=document.getElementById("de").value;viewDays=null;loadAQ();}
+function zoomChart(dir){const steps=[7,14,30,60,90,180,365,730,1095];const cur=viewDays||30;const idx=steps.findIndex(s=>s>=cur);const ni=dir<0?Math.max(0,idx-1):Math.min(steps.length-1,idx===steps.length-1?idx:idx+1);const nd=steps[ni];document.querySelectorAll(".rb[data-d]").forEach(b=>b.classList.toggle("active",parseInt(b.dataset.d)===nd));viewDays=nd;viewStart=null;viewEnd=null;initDates();loadAQ();}
+function tl(btn){const k=btn.dataset.k;if(activeL.has(k)){activeL.delete(k);btn.classList.remove("active");}else{activeL.add(k);btn.classList.add("active");}if(aqData){const s=viewStart||toISO(daysAgo(viewDays||30));renderChart(s,viewEnd||toISO(daysAhead(5)));}}
+function soloLayer(key){if(!aqData)return;_savedLayers=new Set(activeL);activeL=new Set([key]);const s=viewStart||toISO(daysAgo(viewDays||30));renderChart(s,viewEnd||toISO(daysAhead(5)));document.querySelectorAll(".card[data-layer]").forEach(c=>c.style.opacity=c.dataset.layer===key?"1":"0.35");}
+function restoreLayers(){if(!_savedLayers)return;activeL=_savedLayers;_savedLayers=null;const s=viewStart||toISO(daysAgo(viewDays||30));renderChart(s,viewEnd||toISO(daysAhead(5)));document.querySelectorAll(".card[data-layer]").forEach(c=>c.style.opacity="1");}
+let currentDrawer=null;function openDrawer(panel){if(currentDrawer===panel){closeDrawer();return;}["layers","guide","sources"].forEach(p=>{document.getElementById("panel-"+p).style.display=p===panel?"block":"none";});document.querySelectorAll(".bnav-btn").forEach(b=>b.classList.remove("active"));document.getElementById("bnav-"+panel).classList.add("active");document.getElementById("drawer").classList.add("open");document.getElementById("drawer-overlay").style.display="block";currentDrawer=panel;}
+function closeDrawer(){document.getElementById("drawer").classList.remove("open");document.getElementById("drawer-overlay").style.display="none";document.querySelectorAll(".bnav-btn").forEach(b=>b.classList.remove("active"));currentDrawer=null;}
+async function searchLocation(){const q=(document.getElementById("loc-input").value||"").trim();if(q.length<2){showErr("Enter at least 2 characters.");return;}clearErr();try{const r=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=en&countryCode=US`);if(!r.ok)throw new Error("Geocoding error");const data=await r.json();const results=(data.results||[]).filter(x=>x.country_code==="US");if(!results.length){showErr("No US location found.");return;}if(results.length===1)applyLocation(results[0]);else showSuggestions(results);}catch(e){showErr(e.message);}}
+function showSuggestions(results){const el=document.getElementById("geo-suggestions");el.innerHTML="";results.forEach(r=>{const lbl=[r.name,r.admin1,r.country_code].filter(Boolean).join(", ");const btn=document.createElement("button");btn.className="geo-item";btn.textContent=lbl;btn.onclick=()=>{el.style.display="none";applyLocation(r);};el.appendChild(btn);});el.style.display="block";}
+function applyLocation(r){document.getElementById("geo-suggestions").style.display="none";const zip=(r.postcodes&&r.postcodes.length)?r.postcodes[0]:"";const sc=(r.admin1_code||r.admin1||"").replace(/^US-/,'').slice(0,2).toUpperCase();const city=r.name||"",county=r.admin2||"";const display=county?`${county}, ${sc}`:`${city}, ${sc}`;LOC={lat:r.latitude,lon:r.longitude,tz:r.timezone||"America/Denver",name:display,admin:sc,country:"US",zip:zip||city,city,state:r.admin1||"",stateCode:sc,display};document.getElementById("loc-title").textContent=LOC.display+" Allergy Report";document.getElementById("loc-sub").textContent=city+(sc?", "+sc:"");document.getElementById("loc-input").value="";const zc=LOC.zip,ce=encodeURIComponent(city),se=encodeURIComponent(sc),sl=sc.toLowerCase(),cl=city.toLowerCase().replace(/\s+/g,"-");function sh(id,url){document.querySelectorAll("[id='"+id+"']").forEach(e=>{if(e)e.href=url;});}sh("lnk-airnow",`https://www.airnow.gov/?city=${ce}&state=${se}&country=USA`);sh("lnk-pollen",`https://www.pollen.com/forecast/current/pollen/${zc||city}`);sh("lnk-wu",`https://www.wunderground.com/health/us/${sl}/${cl}/${zc}`);sh("lnk-wc",`https://weather.com/forecast/health/l/${city.replace(/\s+/g,"+")}+${sc}`);sh("lnk-iq",`https://www.iqair.com/us/${sl.replace(/ /g,"-")}/${cl}`);const band=LOC.lat>42?"northern":LOC.lat<35?"southern":"mid-latitude";document.getElementById("data-notice").innerHTML=`Air quality: EPA AirNow / Open-Meteo (assimilates US EPA data). Historical Aug 2022 + live forecast.<br/>Pollen: ${band} US seasonal index based on NAB station records.`;refreshAll();}
+document.addEventListener("click",e=>{if(!e.target.closest("#search-row")&&!e.target.closest("#geo-suggestions"))document.getElementById("geo-suggestions").style.display="none";});
+function refreshAll(){document.getElementById("de").value=toISO(daysAhead(5));loadAQ();}
+initDates();updateCards();loadAQ();setInterval(refreshAll,30*60*1000);
+</script>
+</body>
+</html>
