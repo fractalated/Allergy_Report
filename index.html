@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover,maximum-scale=1"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Allergy Report"/>
+  <title>Allergy Report</title>
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    :root{
+      --bg:#0f1117;--s:#1a1d27;--s2:#242736;--b:#2e3347;
+      --a:#4a9eff;--a2:#7c5cbf;--t:#e8eaf0;--t2:#9aa0b4;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+
+    html{width:100%;height:100%;}
+    body{
+      width:100%;height:100%;
+      background:var(--bg);color:var(--t);
+      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+      display:flex;flex-direction:column;
+      overflow:hidden;
+    }
+
+    /* ── HEADER 8vh ── */
+    #hdr{
+      height:8vh;
+      background:linear-gradient(135deg,#1a1d27,#242736);
+      border-bottom:1px solid var(--b);
+      display:flex;align-items:center;
+      padding:0 2vw;
+      padding-top:calc(0.5vh + env(safe-area-inset-top));
+      gap:1.5vw;
+      flex-shrink:0;
+    }
+    #hdr-left{flex:0 0 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;line-height:1.2;}
+    h1{font-size:1.7vh;font-weight:700;color:var(--a);letter-spacing:-.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .sub{font-size:1vh;color:var(--t2);white-space:nowrap;}
+    #hdr-right{flex:1;min-width:0;display:flex;align-items:center;gap:1vw;}
+    #search-row{display:flex;align-items:center;gap:0.8vw;flex:1;min-width:0;}
+    #loc-input{
+      flex:1;min-width:0;
+      background:var(--s2);border:1px solid var(--b);color:var(--t);
+      height:2.6vh;padding:0 1.2vw;
+      border-radius:1.6vh;font-size:1.2vh;outline:none;-webkit-appearance:none;
+    }
+    #loc-input::placeholder{color:var(--t2);}
+    #go-btn{
+      background:var(--a);border:none;color:#fff;
+      height:2.6vh;padding:0 1.2vw;
+      border-radius:1.6vh;font-size:1.2vh;
+      font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;
+    }
+    #rbtn{
+      background:var(--s2);border:1px solid var(--b);color:#4a9eff;
+      height:2.6vh;padding:0 1vw;
+      border-radius:2vh;font-size:1.3vh;
+      cursor:pointer;font-weight:600;white-space:nowrap;flex-shrink:0;
+    }
+
+    /* Geo dropdown */
+    #geo-suggestions{position:fixed;left:2vw;right:2vw;top:11vh;
+      z-index:500;background:#1a1d27;border:1px solid var(--b);
+      border-radius:1vh;overflow:hidden;max-height:25vh;overflow-y:auto;display:none;}
+    .geo-item{display:block;width:100%;text-align:left;background:transparent;border:none;
+      border-bottom:1px solid var(--b);color:var(--t);padding:1.2vh 3vw;font-size:1.4vh;cursor:pointer;}
+    .geo-item:last-child{border-bottom:none;}
+    .geo-item:active{background:var(--s2);}
+
+    /* ── CARDS 8vh ── */
+    #cards-wrap{
+      height:8vh;
+      flex-shrink:0;
+      display:flex;align-items:center;
+      padding:0 2vw;
+      border-bottom:1px solid var(--b);
+    }
+    #cards{display:flex;gap:1vw;overflow-x:auto;width:100%;height:100%;align-items:center;
+      -webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0.5vh 0;}
+    #cards::-webkit-scrollbar{display:none;}
+    .card{
+      flex:0 0 auto;
+      height:78%;
+      min-width:9vw;
+      background:var(--s);border:1px solid var(--b);
+      border-radius:1vh;padding:0.5vh 1vw;text-align:center;
+      position:relative;overflow:hidden;
+      display:flex;flex-direction:column;justify-content:center;
+      touch-action:none;user-select:none;cursor:pointer;
+    }
+    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:0.4vh;background:var(--cc,var(--a));}
+    .clbl{font-size:1vh;color:var(--t2);text-transform:uppercase;letter-spacing:.3px;}
+    .cval{font-size:1.6vh;font-weight:700;color:var(--t);line-height:1.1;}
+    .cunit{font-size:.9vh;color:var(--t2);}
+    .cst{font-size:1vh;font-weight:600;}
+    .vsep{width:0.15vw;height:60%;background:var(--b);flex-shrink:0;margin:0 0.3vw;}
+
+    /* ── CHART WRAP fills remaining space ── */
+    #chart-wrap{
+      flex:1;min-height:0;
+      display:flex;flex-direction:column;
+      overflow:hidden;
+    }
+
+    /* ── TOOLBAR 4vh ── */
+    #toolbar{
+      height:4vh;
+      flex-shrink:0;
+      display:flex;align-items:center;gap:0.5vw;
+      padding:0 1.5vw;
+      overflow-x:auto;
+      -webkit-overflow-scrolling:touch;scrollbar-width:none;
+      border-bottom:1px solid var(--b);
+    }
+    #toolbar::-webkit-scrollbar{display:none;}
+    .rb{
+      background:transparent;border:1px solid var(--b);color:var(--t2);
+      height:2.2vh;padding:0 0.8vw;
+      border-radius:1.5vh;font-size:1.1vh;cursor:pointer;
+      white-space:nowrap;flex-shrink:0;transition:all .15s;
+    }
+    .rb.active{background:var(--a);border-color:var(--a);color:#fff;font-weight:700;}
+    .rb-sep{width:0.1vw;height:2vh;background:var(--b);flex-shrink:0;margin:0 0.3vw;}
+
+    /* Custom date row */
+    #custom-row{display:none;flex-shrink:0;height:4vh;padding:0 1.5vw;
+      align-items:center;border-bottom:1px solid var(--b);}
+    #custom-row.open{display:flex;}
+    .crow{display:flex;gap:1vw;align-items:center;flex-wrap:nowrap;}
+    .crow label{font-size:1vh;color:var(--t2);white-space:nowrap;}
+    .crow input[type=date]{background:var(--s2);border:1px solid var(--b);color:var(--t);
+      height:2.2vh;padding:0 0.8vw;border-radius:1.5vh;font-size:1.2vh;color-scheme:dark;}
+    .apply{background:var(--a2);border:none;color:#fff;height:2.2vh;padding:0 1vw;
+      border-radius:1.5vh;font-size:1.2vh;font-weight:600;cursor:pointer;white-space:nowrap;}
+
+    /* Status / Error */
+    #sbar{display:none;flex-shrink:0;height:3vh;padding:0 2vw;
+      font-size:1vh;color:var(--t2);align-items:center;gap:1vw;
+      background:var(--s);border-bottom:1px solid var(--b);}
+    .spin{width:1.5vh;height:1.5vh;border:0.3vh solid var(--b);border-top-color:var(--a);
+      border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+    #errbox{display:none;flex-shrink:0;padding:0 2vw;height:3vh;font-size:1.2vh;color:#ff8080;
+      background:#2a1a1a;border-bottom:1px solid #5a2a2a;display:none;align-items:center;}
+
+    /* Chart fills flex remainder */
+    #chart-div{flex:1;min-height:0;width:100%;touch-action:none;}
+
+    /* ── BOTTOM NAV 7vh ── */
+    #bnav{
+      height:7vh;
+      flex-shrink:0;
+      display:flex;
+      border-top:1px solid var(--b);
+      background:var(--s);
+      padding-bottom:env(safe-area-inset-bottom);
+    }
+    .bnav-btn{flex:1;display:flex;flex-direction:column;align-items:center;
+      justify-content:center;background:transparent;border:none;
+      color:var(--t2);font-size:1.2vh;font-weight:500;cursor:pointer;gap:0.3vh;transition:color .15s;}
+    .bnav-btn .ico{font-size:2vh;line-height:1;}
+    .bnav-btn.active{color:var(--a);}
+
+    /* ── DRAWER ── */
+    #drawer{
+      position:fixed;bottom:0;left:0;right:0;
+      background:var(--s);border-top:1px solid var(--b);
+      border-radius:2vh 2vh 0 0;
+      max-height:65vh;
+      transform:translateY(100%);
+      transition:transform .28s cubic-bezier(.4,0,.2,1);
+      z-index:400;
+      display:flex;flex-direction:column;
+      padding-bottom:env(safe-area-inset-bottom);
+    }
+    #drawer.open{transform:translateY(0);}
+    #drawer-handle{text-align:center;padding:1.5vh;cursor:pointer;flex-shrink:0;}
+    #drawer-handle::after{content:'';display:inline-block;width:8vw;height:0.5vh;
+      max-width:8vw;background:var(--b);border-radius:2px;}
+    #drawer-body{overflow-y:auto;flex:1;padding:0 4vw 3vh;}
+    #drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:399;display:none;}
+
+    /* Drawer content */
+    .ctitle{font-size:1.4vh;font-weight:600;color:var(--t2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:1vh;margin-top:1vh;}
+    .lrow{display:flex;gap:1vw;flex-wrap:wrap;margin-bottom:0.8vh;}
+    .lsec{font-size:1.1vh;color:var(--t2);width:100%;padding-top:0.8vh;margin-top:0.5vh;border-top:1px solid var(--b);}
+    .lb{display:flex;align-items:center;gap:0.5vw;background:var(--s2);
+      border:1px solid var(--b);color:var(--t2);padding:0.6vh 1.5vw;border-radius:2vh;
+      font-size:1.1vh;cursor:pointer;font-weight:500;transition:all .15s;}
+    .lb.active{border-color:var(--bc);color:var(--bc);background:color-mix(in srgb,var(--bc) 10%,var(--s2));}
+    .dot{width:1vh;height:1vh;border-radius:50%;background:var(--bc);flex-shrink:0;}
+    .ltbl{width:100%;border-collapse:collapse;font-size:1.2vh;margin-top:0.8vh;}
+    .ltbl th{text-align:left;color:var(--t2);font-weight:600;padding:0.5vh 1vw;border-bottom:1px solid var(--b);font-size:1.1vh;}
+    .ltbl td{padding:0.5vh 1vw;border-bottom:1px solid #1e2133;color:var(--t);vertical-align:top;}
+    .ltbl tr:last-child td{border-bottom:none;}
+    .dlg{display:inline-block;width:1vh;height:1vh;border-radius:50%;margin-right:0.5vw;vertical-align:middle;}
+    .plgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(22vw,1fr));gap:1.5vw;margin-top:1.5vh;}
+    .plnk{display:block;background:var(--s2);border:1px solid var(--b);border-radius:1vh;
+      padding:1.5vh 1vw;text-align:center;text-decoration:none;color:var(--t);font-size:1.2vh;font-weight:500;}
+    .plnk .ico{font-size:2.5vh;display:block;margin-bottom:0.5vh;}
+    .notice{background:#1a2030;border:1px solid #2a3050;border-radius:1vh;
+      padding:1vh 2vw;font-size:1vh;color:var(--t2);margin-top:1.5vh;line-height:1.6;}
+    .notice strong{color:var(--t);}.notice a{color:var(--a);}
+    .g{color:#4caf50!important;}.m{color:#ffeb3b!important;}
+    .u{color:#ff9800!important;}.uh{color:#f44336!important;}
+    .vu{color:#9c27b0!important;}.hz{color:#cc0000!important;}
+  </style>
+</head>
+<body>
+
+  <!-- ── HEADER ── -->
+  <div id="hdr">
+    <div id="hdr-left">
+      <h1>&#127807; <span id="loc-title">Douglas County Allergy Report</span></h1>
+      <div class="sub"><span id="loc-sub">Parker / Castle Rock, CO</span> &middot; <span id="lupd">Loading&hellip;</span></div>
+    </div>
+    <div id="hdr-right">
+      <div id="search-row">
+        <input id="loc-input" type="text" placeholder="City or ZIP&hellip;" autocomplete="off" autocorrect="off"
+          onkeydown="if(event.key==='Enter')searchLocation()"/>
+        <button id="go-btn" onclick="searchLocation()">&#128269;</button>
+      </div>
+      <button id="rbtn" onclick="refreshAll()">&#8635;</button>
+    </div>
+  </div>
+  <div id="geo-suggestions"></div>
+
+  <!-- ── CARDS ── -->
+  <div id="cards-wrap">
+    <div id="cards">
+      <div class="card" style="--cc:#4a9eff" data-layer="us_aqi" onmousedown="soloLayer('us_aqi')" onmouseup="restoreLayers()" ontouchstart="soloLayer('us_aqi')" ontouchend="restoreLayers()">
+        <div class="clbl">US AQI</div><div class="cval" id="c-aqi">&#8212;</div>
+        <div class="cunit">Index</div><div class="cst" id="c-aqi-s">&#8212;</div>
+      </div>
+      <div class="card" style="--cc:#ff7043" data-layer="us_aqi_pm2_5" onmousedown="soloLayer('us_aqi_pm2_5')" onmouseup="restoreLayers()" ontouchstart="soloLayer('us_aqi_pm2_5')" ontouchend="restoreLayers()">
+        <div class="clbl">PM 2.5</div><div class="cval" id="c-pm25">&#8212;</div>
+        <div cla
