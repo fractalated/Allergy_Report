@@ -79,21 +79,63 @@
     #cards{display:flex;gap:1vw;overflow-x:auto;width:100%;height:100%;align-items:center;
       -webkit-overflow-scrolling:touch;scrollbar-width:none;padding:0.5vh 0;}
     #cards::-webkit-scrollbar{display:none;}
-    .card{
-      flex:0 0 auto;
-      height:78%;
-      min-width:9vw;
-      background:var(--s);border:1px solid var(--b);
-      border-radius:1vh;padding:0.5vh 1vw;text-align:center;
-      position:relative;overflow:hidden;
-      display:flex;flex-direction:column;justify-content:center;
-      touch-action:none;user-select:none;cursor:pointer;
-    }
-    .card::before{content:'';position:absolute;top:0;left:0;right:0;height:0.4vh;background:var(--cc,var(--a));}
-    .clbl{font-size:1vh;color:var(--t2);text-transform:uppercase;letter-spacing:.3px;}
-    .cval{font-size:1.6vh;font-weight:700;color:var(--t);line-height:1.1;}
-    .cunit{font-size:.9vh;color:var(--t2);}
-    .cst{font-size:1vh;font-weight:600;}
+.card{
+  flex:0 0 auto;
+  height:78%;
+  min-width:9vw;
+  background:var(--s);
+  border:1px solid var(--cc,var(--b));
+  border-radius:1vh;
+  padding:0.5vh 0.9vw 0.45vh;
+  text-align:center;
+  position:relative;
+  overflow:hidden;
+  display:grid;
+  grid-template-rows: 1fr 1.25fr 0.9fr 0.95fr;
+  align-items:center;
+  justify-items:center;
+  touch-action:none;
+  user-select:none;
+  cursor:pointer;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,0.04);
+}
+.card::before{
+  content:none;
+}
+.clbl{
+  font-size:0.82vh;
+  color:var(--t2);
+  text-transform:uppercase;
+  letter-spacing:.3px;
+  line-height:1;
+  margin:0;
+  white-space:nowrap;
+}
+.cval{
+  font-size:1.45vh;
+  font-weight:700;
+  color:var(--t);
+  line-height:1;
+  margin:0;
+  white-space:nowrap;
+}
+.cunit{
+  font-size:0.72vh;
+  color:var(--t2);
+  line-height:1;
+  margin:0;
+  min-height:1em;
+  white-space:nowrap;
+}
+.cst{
+  font-size:0.82vh;
+  font-weight:600;
+  line-height:1;
+  margin:0;
+  min-height:1em;
+  white-space:nowrap;
+}
+
     .vsep{width:0.15vw;height:60%;background:var(--b);flex-shrink:0;margin:0 0.3vw;}
 
     /* CHART WRAP */
@@ -219,36 +261,27 @@
 
   <div id="cards-wrap">
     <div id="cards">
-      <div class="card" style="--cc:#4a9eff" data-layer="us_aqi"
-           onmousedown="soloLayer('us_aqi')" onmouseup="restoreLayers()"
-           ontouchstart="soloLayer('us_aqi')" ontouchend="restoreLayers()">
-        <div class="clbl">US AQI</div><div class="cval" id="c-aqi">&#8212;</div>
-        <div class="cunit">Index</div><div class="cst" id="c-aqi-s">&#8212;</div>
-      </div>
-      <div class="card" style="--cc:#ff7043" data-layer="us_aqi_pm2_5"
-           onmousedown="soloLayer('us_aqi_pm2_5')" onmouseup="restoreLayers()"
-           ontouchstart="soloLayer('us_aqi_pm2_5')" ontouchend="restoreLayers()">
-        <div class="clbl">PM 2.5</div><div class="cval" id="c-pm25">&#8212;</div>
-        <div class="cunit">&mu;g/m&sup3;</div><div class="cst" id="c-pm25-s"></div>
-      </div>
-      <div class="card" style="--cc:#ffa726" data-layer="us_aqi_pm10"
-           onmousedown="soloLayer('us_aqi_pm10')" onmouseup="restoreLayers()"
-           ontouchstart="soloLayer('us_aqi_pm10')" ontouchend="restoreLayers()">
-        <div class="clbl">PM 10</div><div class="cval" id="c-pm10">&#8212;</div>
-        <div class="cunit">&mu;g/m&sup3;</div><div class="cst" id="c-pm10-s"></div>
-      </div>
-      <div class="card" style="--cc:#26c6da" data-layer="us_aqi_ozone"
-           onmousedown="soloLayer('us_aqi_ozone')" onmouseup="restoreLayers()"
-           ontouchstart="soloLayer('us_aqi_ozone')" ontouchend="restoreLayers()">
-        <div class="clbl">Ozone</div><div class="cval" id="c-o3">&#8212;</div>
-        <div class="cunit">&mu;g/m&sup3;</div><div class="cst"></div>
-      </div>
-      <div class="card" style="--cc:#ab47bc" data-layer="us_aqi_no2"
-           onmousedown="soloLayer('us_aqi_no2')" onmouseup="restoreLayers()"
-           ontouchstart="soloLayer('us_aqi_no2')" ontouchend="restoreLayers()">
-        <div class="clbl">NO&#8322;</div><div class="cval" id="c-no2">&#8212;</div>
-        <div class="cunit">&mu;g/m&sup3;</div><div class="cst"></div>
-      </div>
+      <div class="card" style="--cc:#4a9eff" data-layer="us_aqi" onmousedown="soloLayer('us_aqi')" onmouseup="restoreLayers()" ontouchstart="soloLayer('us_aqi')" ontouchend="restoreLayers()">
+  <div class="clbl">US AQI</div><div class="cval" id="c-aqi-s">&#8212;</div>
+  <div class="cunit">Index</div><div class="cst" id="c-aqi">&#8212;</div>
+</div>
+<div class="card" style="--cc:#ff7043" data-layer="us_aqi_pm2_5" onmousedown="soloLayer('us_aqi_pm2_5')" onmouseup="restoreLayers()" ontouchstart="soloLayer('us_aqi_pm2_5')" ontouchend="restoreLayers()">
+  <div class="clbl">PM 2.5</div><div class="cval" id="c-pm25-s">&#8212;</div>
+  <div class="cunit">&mu;g/m&sup3;</div><div class="cst" id="c-pm25">&#8212;</div>
+</div>
+<div class="card" style="--cc:#ffa726" data-layer="us_aqi_pm10" onmousedown="soloLayer('us_aqi_pm10')" onmouseup="restoreLayers()" ontouchstart="soloLayer('us_aqi_pm10')" ontouchend="restoreLayers()">
+  <div class="clbl">PM 10</div><div class="cval" id="c-pm10-s">&#8212;</div>
+  <div class="cunit">&mu;g/m&sup3;</div><div class="cst" id="c-pm10">&#8212;</div>
+</div>
+<div class="card" style="--cc:#26c6da" data-layer="us_aqi_ozone" onmousedown="soloLayer('us_aqi_ozone')" onmouseup="restoreLayers()" ontouchstart="soloLayer('us_aqi_ozone')" ontouchend="restoreLayers()">
+  <div class="clbl">Ozone</div><div class="cval" id="c-o3-s">&#8212;</div>
+  <div class="cunit">&mu;g/m&sup3;</div><div class="cst" id="c-o3">&#8212;</div>
+</div>
+<div class="card" style="--cc:#ab47bc" data-layer="us_aqi_no2" onmousedown="soloLayer('us_aqi_no2')" onmouseup="restoreLayers()" ontouchstart="soloLayer('us_aqi_no2')" ontouchend="restoreLayers()">
+  <div class="clbl">NO&#8322;</div><div class="cval" id="c-no2-s">&#8212;</div>
+  <div class="cunit">&mu;g/m&sup3;</div><div class="cst" id="c-no2">&#8212;</div>
+</div>
+
       <div class="vsep"></div>
       <div class="card" style="--cc:#1b8a3c" data-layer="p_tree"
            onmousedown="soloLayer('p_tree')" onmouseup="restoreLayers()"
@@ -420,7 +453,38 @@ async function fetchLive(){const r=await fetch(`${BASE}?latitude=${LOC.lat}&long
 function parseAQ(json){const d={time:json.hourly.time};for(const k of AQ_FETCH_KEYS)d[k]=json.hourly[k]||new Array(json.hourly.time.length).fill(null);return d;}
 function mergeAQ(hist,live){const map=new Map();if(hist)for(let i=0;i<hist.time.length;i++){const r={};for(const k of AQ_FETCH_KEYS)r[k]=hist[k][i];map.set(hist.time[i],r);}for(let i=0;i<live.time.length;i++){const t=live.time[i],ex=map.get(t);if(ex){for(const k of AQ_FETCH_KEYS)if(ex[k]==null&&live[k][i]!=null)ex[k]=live[k][i];}else{const r={};for(const k of AQ_FETCH_KEYS)r[k]=live[k][i];map.set(t,r);}}const sorted=[...map.entries()].sort((a,b)=>a[0]<b[0]?-1:1);const merged={time:sorted.map(e=>e[0])};for(const k of AQ_FETCH_KEYS)merged[k]=sorted.map(e=>e[1][k]);return merged;}
 async function loadAQ(){clearErr();const startISO=viewStart||toISO(daysAgo(viewDays||30));const endISO=viewEnd||toISO(daysAhead(5));setStatus("Fetching EPA AirNow data…");try{const [histJson,liveJson]=await Promise.all([fetchHistorical(startISO).catch(e=>{console.warn(e);return null;}),fetchLive()]);const live=parseAQ(liveJson),hist=histJson?parseAQ(histJson):null;aqData=mergeAQ(hist,live);updateCards();renderChart(startISO,endISO);document.getElementById("lupd").textContent=fmtT(new Date());setStatus(`${aqData.time.length.toLocaleString()} hourly points loaded.`,false);setTimeout(hideStatus,4000);}catch(e){showErr(e.message);setStatus("Failed.",false);}}
-function updateCards(){const f=(id,v,fmt)=>document.getElementById(id).textContent=v!=null?fmt(v):"—";if(aqData){const aqi=latest(aqData.us_aqi),pm25=latest(aqData.pm2_5),pm10=latest(aqData.pm10),o3=latest(aqData.ozone),no2=latest(aqData.nitrogen_dioxide);const s=aqiClr(aqi);f("c-aqi",aqi,v=>Math.round(v));document.getElementById("c-aqi").className="cval "+s.c;const se=document.getElementById("c-aqi-s");se.textContent=s.l;se.className="cst "+s.c;f("c-pm25",pm25,v=>v.toFixed(1));f("c-pm10",pm10,v=>Math.round(v));f("c-o3",o3,v=>Math.round(v));f("c-no2",no2,v=>no2.toFixed(1));const ps25=aqiClr(latest(aqData.us_aqi_pm2_5)),ps10=aqiClr(latest(aqData.us_aqi_pm10));const p25e=document.getElementById("c-pm25-s");p25e.textContent=ps25.l;p25e.className="cst "+ps25.c;const p10e=document.getElementById("c-pm10-s");p10e.textContent=ps10.l;p10e.className="cst "+ps10.c;}const now=new Date();["tree","grass","weed","mold"].forEach(t=>{const v=pollenVal(t,now),lv=pollenLvl(v);document.getElementById("cp-"+t).textContent=lv.l;const se=document.getElementById("cp-"+t+"-s");se.textContent=Math.round(v)+"/100";se.className="cst "+lv.c;});}
+function updateCards(){const f=(id,v,fmt)=>document.getElementById(id).textContent=v!=null?fmt(v):"—";if(aqData){const aqi=latest(aqData.us_aqi),pm25=latest(aqData.pm2_5),pm10=latest(aqData.pm10),o3=latest(aqData.ozone),no2=latest(aqData.nitrogen_dioxide);const s=aqiClr(aqi);
+f("c-aqi",aqi,v=>Math.round(v));
+const aqiWord=document.getElementById("c-aqi-s");
+aqiWord.textContent=s.l;
+aqiWord.className="cval "+s.c;
+document.getElementById("c-aqi").className="cst "+s.c;
+
+const ps25=aqiClr(latest(aqData.us_aqi_pm2_5));
+f("c-pm25",pm25,v=>v.toFixed(1));
+const p25w=document.getElementById("c-pm25-s");
+p25w.textContent=ps25.l;
+p25w.className="cval "+ps25.c;
+document.getElementById("c-pm25").className="cst "+ps25.c;
+
+const ps10=aqiClr(latest(aqData.us_aqi_pm10));
+f("c-pm10",pm10,v=>Math.round(v));
+const p10w=document.getElementById("c-pm10-s");
+p10w.textContent=ps10.l;
+p10w.className="cval "+ps10.c;
+document.getElementById("c-pm10").className="cst "+ps10.c;
+
+f("c-o3",o3,v=>Math.round(v));
+const o3w=document.getElementById("c-o3-s");
+o3w.textContent="AQI";
+o3w.className="cval";
+document.getElementById("c-o3").className="cst";
+
+f("c-no2",no2,v=>v.toFixed(1));
+const no2w=document.getElementById("c-no2-s");
+no2w.textContent="AQI";
+no2w.className="cval";
+document.getElementById("c-no2").className="cst";const p10e=document.getElementById("c-pm10-s");p10e.textContent=ps10.l;p10e.className="cst "+ps10.c;}const now=new Date();["tree","grass","weed","mold"].forEach(t=>{const v=pollenVal(t,now),lv=pollenLvl(v);document.getElementById("cp-"+t).textContent=lv.l;const se=document.getElementById("cp-"+t+"-s");se.textContent=Math.round(v)+"/100";se.className="cst "+lv.c;});}
 function renderChart(startISO,endISO){if(!aqData)return;const polStart=startISO<"2022-08-01"?"2022-08-01":startISO;const pol=buildPollenSeries(polStart,toISO(daysAhead(5)));const polMap={p_tree:pol.tree,p_grass:pol.grass,p_weed:pol.weed,p_mold:pol.mold};const todayISO=toISO(new Date());const traces=[];for(const[k,cfg]of Object.entries(LAYER_CFG)){if(!activeL.has(k))continue;if(cfg.src==="aq"){const fk=cfg.fetch||k;let t=aqData.time,v=aqData[fk]||[];if(t.length>4000){const s=Math.ceil(t.length/4000);t=t.filter((_,i)=>i%s===0);v=v.filter((_,i)=>i%s===0);}traces.push({x:t,y:v,name:cfg.label,type:"scatter",mode:"lines",line:{color:cfg.color,width:1.7,dash:cfg.dash},yaxis:cfg.yaxis,hovertemplate:`<b>${cfg.label}</b>: %{y:.1f} ${cfg.unit}<br>%{x}<extra></extra>`,connectgaps:false});}else{traces.push({x:pol.times,y:polMap[k],name:cfg.label,type:"scatter",mode:"lines",line:{color:cfg.color,width:1.9,dash:cfg.dash},yaxis:"y3",hovertemplate:`<b>${cfg.label}</b>: %{y:.0f}/100<br>%{x}<extra></extra>`,connectgaps:true});}}const polActive=["p_tree","p_grass","p_weed","p_mold"].some(k=>activeL.has(k));Plotly.react("chart-div",traces,{paper_bgcolor:"#1a1d27",plot_bgcolor:"#1a1d27",font:{color:"#9aa0b4",size:10,family:"-apple-system,BlinkMacSystemFont,sans-serif"},margin:{l:38,r:polActive?48:18,t:4,b:30},legend:{orientation:"h",x:0,y:-0.08,font:{size:9,color:"#9aa0b4"},bgcolor:"rgba(0,0,0,0)"},xaxis:{showgrid:true,gridcolor:"#2e3347",zeroline:false,color:"#9aa0b4",tickfont:{size:9},range:[startISO+"T00:00",toISO(daysAhead(5))+"T23:59"],autorange:false,rangeslider:{visible:false}},yaxis:{title:"AQI",titlefont:{color:"#4a9eff",size:9},tickfont:{color:"#4a9eff",size:9},showgrid:true,gridcolor:"#252840",zeroline:false},yaxis2:{title:"μg/m³",titlefont:{color:"#ff7043",size:9},tickfont:{color:"#ff7043",size:9},overlaying:"y",side:"right",showgrid:false,zeroline:false},yaxis3:{title:"Pollen",titlefont:{color:"#1b8a3c",size:9},tickfont:{color:"#1b8a3c",size:9},overlaying:"y",side:"right",anchor:"free",position:1,showgrid:false,zeroline:false,range:[0,110],visible:polActive},shapes:[{type:"line",x0:0,x1:1,xref:"paper",y0:50,y1:50,yref:"y",line:{color:"rgba(255,235,59,0.18)",width:1,dash:"dot"}},{type:"line",x0:0,x1:1,xref:"paper",y0:100,y1:100,yref:"y",line:{color:"rgba(255,152,0,0.18)",width:1,dash:"dot"}},{type:"line",x0:0,x1:1,xref:"paper",y0:150,y1:150,yref:"y",line:{color:"rgba(244,67,54,0.18)",width:1,dash:"dot"}},{type:"line",x0:todayISO,x1:todayISO,y0:0,y1:1,yref:"paper",line:{color:"rgba(255,255,255,0.3)",width:1.2,dash:"dash"}},{type:"rect",x0:todayISO,x1:toISO(daysAhead(5)),y0:0,y1:1,yref:"paper",xref:"x",fillcolor:"rgba(74,158,255,0.04)",line:{width:0}}],annotations:[{x:0,xref:"paper",y:50,yref:"y",text:"Moderate",showarrow:false,font:{size:8,color:"rgba(255,235,59,0.4)"},xanchor:"left"},{x:0,xref:"paper",y:100,yref:"y",text:"USG",showarrow:false,font:{size:8,color:"rgba(255,152,0,0.4)"},xanchor:"left"},{x:todayISO,y:0.98,yref:"paper",text:"Today",showarrow:false,font:{size:8,color:"rgba(255,255,255,0.45)"},yanchor:"top",xanchor:"left",xshift:3}],hovermode:"x unified",autosize:true,dragmode:false},{responsive:false,displayModeBar:false,scrollZoom:false,doubleClick:false});const cd=document.getElementById('chart-div');if(cd._fullLayout)cd._fullLayout.dragmode=false;}
 (function(){const el=document.getElementById("chart-div");const ro=new ResizeObserver(()=>{if(!aqData)return;Plotly.Plots.resize('chart-div');});ro.observe(el);window.addEventListener("orientationchange",()=>{setTimeout(()=>{if(aqData)Plotly.Plots.resize('chart-div');},200);});})();
 function setStatus(msg,loading=true){document.getElementById("stxt").textContent=msg;document.getElementById("spin").style.display=loading?"block":"none";document.getElementById("sbar").style.display="flex";}
